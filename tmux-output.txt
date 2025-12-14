@@ -1,0 +1,1419 @@
+nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ source .venv/bin/activat
+e
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ clear
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonau
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_enc
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encod
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algona
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fm
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdan
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fm
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmr
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang0
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ c
+lear
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01
+1/fmri_encoder/algonauts2025$ clear
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ uv run p
+ython train_feature_encoder.py
+Uninstalled 1 package in 25ms
+░░░░░░░░░░░░░░░░░░░░ [0/1] Installing wheels...                            warning: Failed t
+o hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may n
+ot be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to
+ suppress this warning.
+Installed 1 package in 117ms
+training multi-subject fmri encoder
+sha: 77840e142e358d6eaee2d8ce30085c343da58e0b, status: has uncommitted changes, branch: main
+config:
+out_dir: output/feature_encoding_default
+model_name: multi_sub_conv_linear
+subjects:
+- 1
+- 2
+- 3
+- 5
+model:
+  embed_dim: 192
+  encoder_kernel_size: 45
+  decoder_kernel_size: 0
+  hidden_model: null
+  global_pool: avg
+  encoder_causal: false
+  encoder_positive: false
+  encoder_blockwise: false
+  pool_num_heads: 3
+  with_shared_decoder: true
+  with_subject_decoders: true
+transformer:
+  num_heads: 3
+  depth: 6
+  mlp_ratio: 4.0
+conv1dnext:
+  depth: 6
+  kernel_size: 11
+  causal: false
+features:
+  internvl3_8b:
+    model: InternVL3_8B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+  internvl3_14b:
+    model: InternVL3_14B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+      layers.30: language_model.model.layers.30.post_attention_layernorm
+  qwen-2-5-omni-3b:
+    model: qwen2-5_3B
+    layers:
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  qwen-2-5-omni-7b:
+    model: qwen-2-5-omni-7b
+    layers:
+      layers.5: model.layers.5.post_attention_layernorm
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  whisper:
+    model: whisper
+    layers:
+      layers.12: layers.12.fc2
+      layers.25: layers.25.fc2
+      layers.31: layers.31.fc2
+      norm: layer_norm
+  llama_3.2_1b:
+    model: Llama-3.2-1B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+  llama_3.2_3b:
+    model: Llama-3.2-3B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+      layers.19: model.layers.19
+      layers.23: model.layers.23
+  vjepa2:
+    model: vjepa2_avg_feat
+    layers:
+      layers.5: encoder.layer.5.norm1_avg
+      layers.15: encoder.layer.15.norm1_avg
+      layers.25: encoder.layer.25.norm1_avg
+      layers.35: encoder.layer.35.norm1_avg
+      norm: encoder.layernorm_avg
+include_features:
+- llama_3.2_3b/layers.11
+- whisper/layers.12
+- qwen-2-5-omni-3b/layers.20
+- internvl3_14b/layers.30
+- vjepa2/norm
+datasets:
+  train:
+    filter:
+      seasons:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      movies:
+      - bourne
+      - wolf
+    sample_length: 64
+    num_samples: 2000
+    shuffle: true
+    seed: 42
+  val_s6:
+    filter:
+      seasons:
+      - 6
+      movies: []
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_figures:
+    filter:
+      seasons: []
+      movies:
+      - figures
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_life:
+    filter:
+      seasons: []
+      movies:
+      - life
+    sample_length: null
+    num_samples: null
+    shuffle: false
+val_set_name: val_figures
+batch_size: 16
+lr: 0.0003
+weight_decay: 0.1
+epochs: 10
+datasets_root: null
+seed: 3315
+overwrite: false
+device: cuda
+
+output output/feature_encoding_default exists; exiting.
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ clear
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ uv run p
+ython train_feature_encoder.py
+Uninstalled 1 package in 25ms
+░░░░░░░░░░░░░░░░░░░░ [0/1] Installing wheels...                            warning: Failed t
+o hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may n
+ot be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to
+ suppress this warning.
+Installed 1 package in 115ms
+training multi-subject fmri encoder
+sha: 77840e142e358d6eaee2d8ce30085c343da58e0b, status: has uncommitted changes, branch: main
+config:
+out_dir: output/feature_encoding_default
+model_name: multi_sub_conv_linear
+subjects:
+- 1
+- 2
+- 3
+- 5
+model:
+  embed_dim: 192
+  encoder_kernel_size: 45
+  decoder_kernel_size: 0
+  hidden_model: null
+  global_pool: avg
+  encoder_causal: false
+  encoder_positive: false
+  encoder_blockwise: false
+  pool_num_heads: 3
+  with_shared_decoder: true
+  with_subject_decoders: true
+transformer:
+  num_heads: 3
+  depth: 6
+  mlp_ratio: 4.0
+conv1dnext:
+  depth: 6
+  kernel_size: 11
+  causal: false
+features:
+  internvl3_8b:
+    model: InternVL3_8B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+  internvl3_14b:
+    model: InternVL3_14B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+      layers.30: language_model.model.layers.30.post_attention_layernorm
+  qwen-2-5-omni-3b:
+    model: qwen2-5_3B
+    layers:
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  qwen-2-5-omni-7b:
+    model: qwen-2-5-omni-7b
+    layers:
+      layers.5: model.layers.5.post_attention_layernorm
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  whisper:
+    model: whisper
+    layers:
+      layers.12: layers.12.fc2
+      layers.25: layers.25.fc2
+      layers.31: layers.31.fc2
+      norm: layer_norm
+  llama_3.2_1b:
+    model: Llama-3.2-1B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+  llama_3.2_3b:
+    model: Llama-3.2-3B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+      layers.19: model.layers.19
+      layers.23: model.layers.23
+  vjepa2:
+    model: vjepa2_avg_feat
+    layers:
+      layers.5: encoder.layer.5.norm1_avg
+      layers.15: encoder.layer.15.norm1_avg
+      layers.25: encoder.layer.25.norm1_avg
+      layers.35: encoder.layer.35.norm1_avg
+      norm: encoder.layernorm_avg
+include_features:
+- llama_3.2_3b/layers.11
+- whisper/layers.12
+- qwen-2-5-omni-3b/layers.20
+- internvl3_14b/layers.30
+- vjepa2/norm
+datasets:
+  train:
+    filter:
+      seasons:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      movies:
+      - bourne
+      - wolf
+    sample_length: 64
+    num_samples: 2000
+    shuffle: true
+    seed: 42
+  val_s6:
+    filter:
+      seasons:
+      - 6
+      movies: []
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_figures:
+    filter:
+      seasons: []
+      movies:
+      - figures
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_life:
+    filter:
+      seasons: []
+      movies:
+      - life
+    sample_length: null
+    num_samples: null
+    shuffle: false
+val_set_name: val_figures
+batch_size: 16
+lr: 0.0003
+weight_decay: 0.1
+epochs: 10
+datasets_root: null
+seed: 3315
+overwrite: false
+device: cuda
+
+running on: cuda
+creating data loaders
+loading fmri data
+loading features llama_3.2_3b/layers.11 (Llama-3.2-3B/model.layers.11)
+loading features whisper/layers.12 (whisper/layers.12.fc2)
+loading features qwen-2-5-omni-3b/layers.20 (qwen2-5_3B/model.layers.20.post_attention_layer
+norm)
+loading features internvl3_14b/layers.30 (InternVL3_14B/language_model.model.layers.30.post_
+attention_layernorm)
+loading features vjepa2/norm (vjepa2_avg_feat/encoder.layernorm_avg)
+loading dataset: train
+
+filter:
+  seasons:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  movies:
+  - bourne
+  - wolf
+sample_length: 64
+num_samples: 2000
+shuffle: true
+seed: 42
+
+episodes: train:
+
+['s01e01a', 's01e01b', 's01e02a', 's01e02b', 's01e03a', 's01e03b', 's01e04a', 's01e04b', 's0
+1e05a', 's01e05b', 's01e06a', 's01e06b', 's01e07a', 's01e07b', 's01e08a', 's01e08b', 's01e09
+a', 's01e09b', 's01e10a', 's01e10b', 's01e11a', 's01e11b', 's01e12a', 's01e12b', 's01e13a',
+'s01e13b', 's01e14a', 's01e14b', 's01e15a', 's01e15b', 's01e16a', 's01e16b', 's01e17a', 's01
+e17b', 's01e18a', 's01e18b', 's01e19a', 's01e19b', 's01e20a', 's01e20b', 's01e21a', 's01e21b
+', 's01e22a', 's01e22b', 's01e23a', 's01e23b', 's01e24a', 's01e24b', 's02e01a', 's02e01b', '
+s02e02a', 's02e02b', 's02e03a', 's02e03b', 's02e04a', 's02e04b', 's02e05a', 's02e05b', 's02e
+06a', 's02e06b', 's02e07a', 's02e07b', 's02e08a', 's02e08b', 's02e09a', 's02e09b', 's02e10a'
+, 's02e10b', 's02e11a', 's02e11b', 's02e12a', 's02e12b', 's02e13a', 's02e13b', 's02e14a', 's
+02e14b', 's02e15a', 's02e15b', 's02e16a', 's02e16b', 's02e17a', 's02e17b', 's02e18a', 's02e1
+8b', 's02e19a', 's02e19b', 's02e20a', 's02e20b', 's02e21a', 's02e21b', 's02e22a', 's02e22b',
+ 's02e23a', 's02e23b', 's02e24a', 's02e24b', 's03e01a', 's03e01b', 's03e02a', 's03e02b', 's0
+3e03a', 's03e03b', 's03e04a', 's03e04b', 's03e05a', 's03e05b', 's03e06a', 's03e06b', 's03e07
+a', 's03e07b', 's03e08a', 's03e08b', 's03e09a', 's03e09b', 's03e10a', 's03e10b', 's03e11a',
+'s03e11b', 's03e12a', 's03e12b', 's03e13a', 's03e13b', 's03e14a', 's03e14b', 's03e15a', 's03
+e15b', 's03e16a', 's03e16b', 's03e17a', 's03e17b', 's03e18a', 's03e18b', 's03e19a', 's03e19b
+', 's03e20a', 's03e20b', 's03e21a', 's03e21b', 's03e22a', 's03e22b', 's03e23a', 's03e23b', '
+s03e24a', 's03e24b', 's03e25a', 's03e25b', 's04e02a', 's04e02b', 's04e03a', 's04e03b', 's04e
+04a', 's04e04b', 's04e05a', 's04e05b', 's04e06a', 's04e06b', 's04e07a', 's04e07b', 's04e08a'
+, 's04e08b', 's04e09a', 's04e09b', 's04e10a', 's04e10b', 's04e11a', 's04e11b', 's04e12a', 's
+04e12b', 's04e13a', 's04e14a', 's04e14b', 's04e15a', 's04e15b', 's04e16a', 's04e16b', 's04e1
+7a', 's04e17b', 's04e18a', 's04e18b', 's04e19a', 's04e19b', 's04e20a', 's04e20b', 's04e21a',
+ 's04e21b', 's04e22a', 's04e22b', 's04e23a', 's04e23b', 's04e23c', 's04e23d', 's05e01a', 's0
+5e01b', 's05e02a', 's05e02b', 's05e03a', 's05e03b', 's05e04a', 's05e04b', 's05e05a', 's05e05
+b', 's05e06a', 's05e06b', 's05e07a', 's05e07b', 's05e08a', 's05e08b', 's05e09a', 's05e09b',
+'s05e10a', 's05e10b', 's05e11a', 's05e11b', 's05e12a', 's05e12b', 's05e13a', 's05e13b', 's05
+e14a', 's05e14b', 's05e15a', 's05e15b', 's05e16a', 's05e16b', 's05e17a', 's05e17b', 's05e18a
+', 's05e18b', 's05e19a', 's05e19b', 's05e20b', 's05e21a', 's05e21b', 's05e22a', 's05e22b', '
+s05e23a', 's05e23b', 's05e23c', 's05e23d', ('bourne01', 1), ('bourne02', 1), ('bourne03', 1)
+, ('bourne04', 1), ('bourne05', 1), ('bourne06', 1), ('bourne07', 1), ('bourne08', 1), ('bou
+rne09', 1), ('bourne10', 1), ('wolf01', 1), ('wolf02', 1), ('wolf03', 1), ('wolf04', 1), ('w
+olf05', 1), ('wolf06', 1), ('wolf07', 1), ('wolf08', 1), ('wolf09', 1), ('wolf10', 1), ('wol
+f11', 1), ('wolf12', 1), ('wolf13', 1), ('wolf14', 1), ('wolf15', 1), ('wolf16', 1), ('wolf1
+7', 1)]
+loading dataset: val_s6
+
+filter:
+  seasons:
+  - 6
+  movies: []
+sample_length: null
+num_samples: null
+shuffle: false
+
+episodes: val_s6:
+
+['s06e01a', 's06e01b', 's06e02a', 's06e02b', 's06e03b', 's06e04a', 's06e04b', 's06e05a', 's0
+6e05b', 's06e06a', 's06e06b', 's06e07a', 's06e07b', 's06e08a', 's06e08b', 's06e09a', 's06e09
+b', 's06e10a', 's06e10b', 's06e11a', 's06e11b', 's06e12a', 's06e12b', 's06e13a', 's06e13b',
+'s06e14a', 's06e14b', 's06e15a', 's06e15b', 's06e15c', 's06e15d', 's06e17a', 's06e17b', 's06
+e18a', 's06e18b', 's06e19a', 's06e19b', 's06e20a', 's06e20b', 's06e21a', 's06e21b', 's06e22a
+', 's06e22b', 's06e23a', 's06e23b', 's06e24a', 's06e24b', 's06e24c', 's06e24d']
+loading dataset: val_figures
+
+filter:
+  seasons: []
+  movies:
+  - figures
+sample_length: null
+num_samples: null
+shuffle: false
+
+episodes: val_figures:
+
+[('figures01', 1), ('figures02', 1), ('figures03', 1), ('figures04', 1), ('figures05', 1), (
+'figures06', 1), ('figures07', 1), ('figures08', 1), ('figures09', 1), ('figures10', 1), ('f
+igures11', 1), ('figures12', 1)]
+loading dataset: val_life
+
+filter:
+  seasons: []
+  movies:
+  - life
+sample_length: null
+num_samples: null
+shuffle: false
+
+episodes: val_life:
+
+[('life01', 1), ('life02', 1), ('life03', 1), ('life04', 1), ('life05', 1)]
+feat dims: [3072, 1280, 2048, 5120, 1408]
+creating model
+model: MultiSubjectConvLinearEncoder(
+  (feat_embeds): ModuleList(
+    (0): LinearConv(
+      (fc): Linear(in_features=3072, out_features=192, bias=True)
+      (conv): DepthConv1d(192, kernel_size=45, causal=False, positive=False, blockwise=False
+, bias=True)
+    )
+    (1): LinearConv(
+      (fc): Linear(in_features=1280, out_features=192, bias=True)
+      (conv): DepthConv1d(192, kernel_size=45, causal=False, positive=False, blockwise=False
+, bias=True)
+    )
+    (2): LinearConv(
+      (fc): Linear(in_features=2048, out_features=192, bias=True)
+      (conv): DepthConv1d(192, kernel_size=45, causal=False, positive=False, blockwise=False
+, bias=True)
+    )
+    (3): LinearConv(
+      (fc): Linear(in_features=5120, out_features=192, bias=True)
+      (conv): DepthConv1d(192, kernel_size=45, causal=False, positive=False, blockwise=False
+, bias=True)
+    )
+    (4): LinearConv(
+      (fc): Linear(in_features=1408, out_features=192, bias=True)
+      (conv): DepthConv1d(192, kernel_size=45, causal=False, positive=False, blockwise=False
+, bias=True)
+    )
+  )
+  (feat_pool): None
+  (hidden_model): None
+  (shared_decoder): Linear(in_features=192, out_features=1000, bias=True)
+  (subject_decoders): ModuleList(
+    (0-3): 4 x Linear(in_features=192, out_features=1000, bias=True)
+  )
+)
+num params (train): 3.49 (3.49M)
+Train:   0 [ 19]  Loss: 0.371 (0.373)  Time: 0.101,0.123 130/s  Mem: 0.22,0.25 GB
+Train:   0 [ 39]  Loss: 0.368 (0.370)  Time: 0.092,0.105 152/s  Mem: 0.22,0.25 GB
+Train:   0 [ 59]  Loss: 0.352 (0.365)  Time: 0.084,0.095 169/s  Mem: 0.22,0.25 GB
+Train:   0 [ 79]  Loss: 0.343 (0.361)  Time: 0.079,0.089 181/s  Mem: 0.22,0.25 GB
+Train:   0 [ 99]  Loss: 0.346 (0.358)  Time: 0.076,0.085 188/s  Mem: 0.22,0.25 GB
+Train:   0 [119]  Loss: 0.347 (0.356)  Time: 0.077,0.085 187/s  Mem: 0.22,0.25 GB
+Evaluate (val_s6):   0  Loss: 0.338  Acc: 0.245,0.248,0.268,0.238 (0.250)
+Evaluate (val_figures):   0  Loss: 0.347  Acc: 0.225,0.204,0.219,0.185 (0.208)
+Evaluate (val_life):   0  Loss: 0.368  Acc: 0.153,0.165,0.194,0.114 (0.157)
+Train:   1 [ 19]  Loss: 0.333 (0.339)  Time: 0.239,0.246 65/s  Mem: 0.22,0.25 GB
+Train:   1 [ 39]  Loss: 0.337 (0.338)  Time: 0.164,0.171 94/s  Mem: 0.22,0.25 GB
+Train:   1 [ 59]  Loss: 0.332 (0.338)  Time: 0.131,0.138 116/s  Mem: 0.22,0.25 GB
+Train:   1 [ 79]  Loss: 0.325 (0.337)  Time: 0.114,0.120 133/s  Mem: 0.22,0.25 GB
+Train:   1 [ 99]  Loss: 0.329 (0.336)  Time: 0.103,0.109 146/s  Mem: 0.22,0.25 GB
+Train:   1 [119]  Loss: 0.331 (0.336)  Time: 0.097,0.103 155/s  Mem: 0.22,0.25 GB
+Evaluate (val_s6):   1  Loss: 0.331  Acc: 0.275,0.280,0.303,0.264 (0.280)
+Evaluate (val_figures):   1  Loss: 0.342  Acc: 0.255,0.231,0.246,0.211 (0.236)
+Evaluate (val_life):   1  Loss: 0.364  Acc: 0.173,0.186,0.224,0.136 (0.180)
+Train:   2 [ 19]  Loss: 0.330 (0.332)  Time: 0.096,0.102 157/s  Mem: 0.22,0.25 GB
+Train:   2 [ 39]  Loss: 0.323 (0.331)  Time: 0.086,0.091 175/s  Mem: 0.22,0.25 GB
+Train:   2 [ 59]  Loss: 0.340 (0.332)  Time: 0.080,0.085 189/s  Mem: 0.22,0.25 GB
+Train:   2 [ 79]  Loss: 0.324 (0.331)  Time: 0.075,0.080 200/s  Mem: 0.22,0.25 GB
+Train:   2 [ 99]  Loss: 0.322 (0.331)  Time: 0.074,0.080 201/s  Mem: 0.22,0.25 GB
+Train:   2 [119]  Loss: 0.331 (0.331)  Time: 0.073,0.078 204/s  Mem: 0.22,0.25 GB
+Evaluate (val_s6):   2  Loss: 0.329  Acc: 0.286,0.291,0.316,0.274 (0.292)
+Evaluate (val_figures):   2  Loss: 0.340  Acc: 0.264,0.242,0.257,0.218 (0.246)
+Evaluate (val_life):   2  Loss: 0.364  Acc: 0.180,0.194,0.232,0.142 (0.187)
+Train:   3 [ 19]  Loss: 0.331 (0.329)  Time: 0.062,0.068 235/s  Mem: 0.22,0.25 GB
+Train:   3 [ 39]  Loss: 0.327 (0.328)  Time: 0.064,0.070 230/s  Mem: 0.22,0.25 GB
+Train:   3 [ 59]  Loss: 0.326 (0.327)  Time: 0.065,0.071 226/s  Mem: 0.22,0.25 GB
+Train:   3 [ 79]  Loss: 0.330 (0.327)  Time: 0.064,0.070 228/s  Mem: 0.22,0.25 GB
+Train:   3 [ 99]  Loss: 0.316 (0.327)  Time: 0.064,0.070 228/s  Mem: 0.22,0.25 GB
+Train:   3 [119]  Loss: 0.326 (0.327)  Time: 0.065,0.070 227/s  Mem: 0.22,0.25 GB
+Evaluate (val_s6):   3  Loss: 0.328  Acc: 0.292,0.299,0.323,0.280 (0.298)
+Evaluate (val_figures):   3  Loss: 0.339  Acc: 0.269,0.246,0.262,0.223 (0.250)
+Evaluate (val_life):   3  Loss: 0.363  Acc: 0.187,0.201,0.237,0.146 (0.193)
+Train:   4 [ 19]  Loss: 0.330 (0.325)  Time: 0.065,0.070 227/s  Mem: 0.22,0.25 GB
+Train:   4 [ 39]  Loss: 0.329 (0.325)  Time: 0.062,0.068 236/s  Mem: 0.22,0.25 GB
+Train:   4 [ 59]  Loss: 0.339 (0.325)  Time: 0.063,0.068 234/s  Mem: 0.22,0.25 GB
+Train:   4 [ 79]  Loss: 0.323 (0.325)  Time: 0.064,0.069 231/s  Mem: 0.22,0.25 GB
+Train:   4 [ 99]  Loss: 0.319 (0.324)  Time: 0.064,0.069 230/s  Mem: 0.22,0.25 GB
+Train:   4 [119]  Loss: 0.324 (0.324)  Time: 0.064,0.069 230/s  Mem: 0.22,0.25 GB
+Evaluate (val_s6):   4  Loss: 0.327  Acc: 0.297,0.302,0.326,0.283 (0.302)
+Evaluate (val_figures):   4  Loss: 0.339  Acc: 0.267,0.249,0.265,0.222 (0.251)
+Evaluate (val_life):   4  Loss: 0.366  Acc: 0.185,0.199,0.235,0.148 (0.192)
+Train:   5 [ 19]  Loss: 0.334 (0.326)  Time: 0.059,0.065 246/s  Mem: 0.22,0.25 GB
+Train:   5 [ 39]  Loss: 0.328 (0.323)  Time: 0.059,0.065 247/s  Mem: 0.22,0.25 GB
+Train:   5 [ 59]  Loss: 0.322 (0.323)  Time: 0.061,0.067 239/s  Mem: 0.22,0.25 GB
+Train:   5 [ 79]  Loss: 0.331 (0.323)  Time: 0.061,0.067 240/s  Mem: 0.22,0.25 GB
+Train:   5 [ 99]  Loss: 0.318 (0.324)  Time: 0.062,0.068 236/s  Mem: 0.22,0.25 GB
+Train:   5 [119]  Loss: 0.330 (0.324)  Time: 0.061,0.067 238/s  Mem: 0.22,0.25 GB
+Evaluate (val_s6):   5  Loss: 0.326  Acc: 0.299,0.305,0.328,0.284 (0.304)
+Evaluate (val_figures):   5  Loss: 0.339  Acc: 0.269,0.249,0.264,0.224 (0.252)
+Evaluate (val_life):   5  Loss: 0.364  Acc: 0.189,0.198,0.235,0.148 (0.192)
+Train:   6 [ 19]  Loss: 0.309 (0.321)  Time: 0.059,0.064 249/s  Mem: 0.22,0.25 GB
+Train:   6 [ 39]  Loss: 0.315 (0.321)  Time: 0.060,0.066 243/s  Mem: 0.22,0.25 GB
+Train:   6 [ 59]  Loss: 0.320 (0.320)  Time: 0.062,0.067 237/s  Mem: 0.22,0.25 GB
+Train:   6 [ 79]  Loss: 0.325 (0.319)  Time: 0.063,0.068 234/s  Mem: 0.22,0.25 GB
+Train:   6 [ 99]  Loss: 0.311 (0.319)  Time: 0.065,0.070 227/s  Mem: 0.22,0.25 GB
+Train:   6 [119]  Loss: 0.311 (0.319)  Time: 0.065,0.071 226/s  Mem: 0.22,0.25 GB
+Evaluate (val_s6):   6  Loss: 0.326  Acc: 0.301,0.306,0.330,0.285 (0.305)
+Evaluate (val_figures):   6  Loss: 0.339  Acc: 0.270,0.249,0.264,0.221 (0.251)
+Evaluate (val_life):   6  Loss: 0.366  Acc: 0.186,0.201,0.233,0.148 (0.192)
+done! best accuracy:
+ {"val_s6": 0.3037675470113754, "val_figures": 0.251741174608469, "val_life": 0.192258443683
+38585, "run_time": 103.15332058444619}
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01(algonauts2025) nhdang01@koa-dgxa-b8-
+u11:/raid/nhdang01(algonauts2025) nhdang01@koa-dgxa-b8-u11(algonauts2025)(algonauts2025) nhd
+ang01@koa-dgxa-b8-u11:/raid/nhdang01(algo(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhda
+ng01/fmri_encoder/algonauts2025$ clear
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ uv run p
+ython train_
+train_cross_encoder.py    train_feature_encoder.py  train_nested_encoder.py
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ uv run p
+ython train_
+train_cross_encoder.py    train_feature_encoder.py  train_nested_encoder.py
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ uv run p
+ython train_
+train_cross_encoder.py    train_feature_encoder.py  train_nested_encoder.py
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ uv run p
+ython train_feature_encoder.py
+Uninstalled 1 package in 26ms
+░░░░░░░░░░░░░░░░░░░░ [0/1] Installing wheels...
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded perf
+ormance.
+         If the cache and target directories are on different filesystems, hardlinking may n
+ot be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to
+ suppress this warning.
+Installed 1 package in 152ms
+training multi-subject fmri encoder
+sha: 77840e142e358d6eaee2d8ce30085c343da58e0b, status: has uncommitted changes, branch: main
+config:
+out_dir: output/feature_encoding_default
+model_name: multi_sub_conv_linear
+subjects:
+- 1
+- 2
+- 3
+- 5
+model:
+  embed_dim: 192
+  encoder_kernel_size: 45
+  decoder_kernel_size: 0
+  hidden_model: null
+  global_pool: avg
+  encoder_causal: false
+  encoder_positive: false
+  encoder_blockwise: false
+  pool_num_heads: 3
+  with_shared_decoder: true
+  with_subject_decoders: true
+transformer:
+  num_heads: 3
+  depth: 6
+  mlp_ratio: 4.0
+conv1dnext:
+  depth: 6
+  kernel_size: 11
+  causal: false
+features:
+  internvl3_8b:
+    model: InternVL3_8B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+  internvl3_14b:
+    model: InternVL3_14B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+      layers.30: language_model.model.layers.30.post_attention_layernorm
+  qwen-2-5-omni-3b:
+    model: qwen2-5_3B
+    layers:
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  qwen-2-5-omni-7b:
+    model: qwen-2-5-omni-7b
+    layers:
+      layers.5: model.layers.5.post_attention_layernorm
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  whisper:
+    model: whisper
+    layers:
+      layers.12: layers.12.fc2
+      layers.25: layers.25.fc2
+      layers.31: layers.31.fc2
+      norm: layer_norm
+  llama_3.2_1b:
+    model: Llama-3.2-1B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+  llama_3.2_3b:
+    model: Llama-3.2-3B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+      layers.19: model.layers.19
+      layers.23: model.layers.23
+  vjepa2:
+    model: vjepa2_avg_feat
+    layers:
+      layers.5: encoder.layer.5.norm1_avg
+      layers.15: encoder.layer.15.norm1_avg
+      layers.25: encoder.layer.25.norm1_avg
+      layers.35: encoder.layer.35.norm1_avg
+      norm: encoder.layernorm_avg
+include_features:
+- llama_3.2_3b/layers.11
+datasets:
+  train:
+    filter:
+      seasons:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      movies:
+      - bourne
+      - wolf
+    sample_length: 64
+    num_samples: 2000
+    shuffle: true
+    seed: 42
+  val_s6:
+    filter:
+      seasons:
+      - 6
+      movies: []
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_figures:
+    filter:
+      seasons: []
+      movies:
+      - figures
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_life:
+    filter:
+      seasons: []
+      movies:
+      - life
+    sample_length: null
+    num_samples: null
+    shuffle: false
+val_set_name: val_figures
+batch_size: 16
+lr: 0.0003
+weight_decay: 0.1
+epochs: 10
+datasets_root: null
+seed: 3315
+overwrite: false
+device: cuda
+
+running on: cuda
+creating data loaders
+loading fmri data
+loading features llama_3.2_3b/layers.11 (Llama-3.2-3B/model.layers.11)
+loading dataset: train
+
+filter:
+  seasons:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  movies:
+  - bourne
+  - wolf
+sample_length: 64
+num_samples: 2000
+shuffle: true
+seed: 42
+
+episodes: train:
+
+['s01e01a', 's01e01b', 's01e02a', 's01e02b', 's01e03a', 's01e03b', 's01e04a', 's01e04b', 's0
+1e05a', 's01e05b', 's01e06a', 's01e06b', 's01e07a', 's01e07b', 's01e08a', 's01e08b', 's01e09
+a', 's01e09b', 's01e10a', 's01e10b', 's01e11a', 's01e11b', 's01e12a', 's01e12b', 's01e13a',
+'s01e13b', 's01e14a', 's01e14b', 's01e15a', 's01e15b', 's01e16a', 's01e16b', 's01e17a', 's01
+e17b', 's01e18a', 's01e18b', 's01e19a', 's01e19b', 's01e20a', 's01e20b', 's01e21a', 's01e21b
+', 's01e22a', 's01e22b', 's01e23a', 's01e23b', 's01e24a', 's01e24b', 's02e01a', 's02e01b', '
+s02e02a', 's02e02b', 's02e03a', 's02e03b', 's02e04a', 's02e04b', 's02e05a', 's02e05b', 's02e
+06a', 's02e06b', 's02e07a', 's02e07b', 's02e08a', 's02e08b', 's02e09a', 's02e09b', 's02e10a'
+, 's02e10b', 's02e11a', 's02e11b', 's02e12a', 's02e12b', 's02e13a', 's02e13b', 's02e14a', 's
+02e14b', 's02e15a', 's02e15b', 's02e16a', 's02e16b', 's02e17a', 's02e17b', 's02e18a', 's02e1
+8b', 's02e19a', 's02e19b', 's02e20a', 's02e20b', 's02e21a', 's02e21b', 's02e22a', 's02e22b',
+ 's02e23a', 's02e23b', 's02e24a', 's02e24b', 's03e01a', 's03e01b', 's03e02a', 's03e02b', 's0
+3e03a', 's03e03b', 's03e04a', 's03e04b', 's03e05a', 's03e05b', 's03e06a', 's03e06b', 's03e07
+a', 's03e07b', 's03e08a', 's03e08b', 's03e09a', 's03e09b', 's03e10a', 's03e10b', 's03e11a',
+'s03e11b', 's03e12a', 's03e12b', 's03e13a', 's03e13b', 's03e14a', 's03e14b', 's03e15a', 's03
+e15b', 's03e16a', 's03e16b', 's03e17a', 's03e17b', 's03e18a', 's03e18b', 's03e19a', 's03e19b
+', 's03e20a', 's03e20b', 's03e21a', 's03e21b', 's03e22a', 's03e22b', 's03e23a', 's03e23b', '
+s03e24a', 's03e24b', 's03e25a', 's03e25b', 's04e02a', 's04e02b', 's04e03a', 's04e03b', 's04e
+04a', 's04e04b', 's04e05a', 's04e05b', 's04e06a', 's04e06b', 's04e07a', 's04e07b', 's04e08a'
+, 's04e08b', 's04e09a', 's04e09b', 's04e10a', 's04e10b', 's04e11a', 's04e11b', 's04e12a', 's
+04e12b', 's04e13a', 's04e14a', 's04e14b', 's04e15a', 's04e15b', 's04e16a', 's04e16b', 's04e1
+7a', 's04e17b', 's04e18a', 's04e18b', 's04e19a', 's04e19b', 's04e20a', 's04e20b', 's04e21a',
+ 's04e21b', 's04e22a', 's04e22b', 's04e23a', 's04e23b', 's04e23c', 's04e23d', 's05e01a', 's0
+5e01b', 's05e02a', 's05e02b', 's05e03a', 's05e03b', 's05e04a', 's05e04b', 's05e05a', 's05e05
+b', 's05e06a', 's05e06b', 's05e07a', 's05e07b', 's05e08a', 's05e08b', 's05e09a', 's05e09b',
+'s05e10a', 's05e10b', 's05e11a', 's05e11b', 's05e12a', 's05e12b', 's05e13a', 's05e13b', 's05
+e14a', 's05e14b', 's05e15a', 's05e15b', 's05e16a', 's05e16b', 's05e17a', 's05e17b', 's05e18a
+', 's05e18b', 's05e19a', 's05e19b', 's05e20b', 's05e21a', 's05e21b', 's05e22a', 's05e22b', '
+s05e23a', 's05e23b', 's05e23c', 's05e23d', ('bourne01', 1), ('bourne02', 1), ('bourne03', 1)
+, ('bourne04', 1), ('bourne05', 1), ('bourne06', 1), ('bourne07', 1), ('bourne08', 1), ('bou
+rne09', 1), ('bourne10', 1), ('wolf01', 1), ('wolf02', 1), ('wolf03', 1), ('wolf04', 1), ('w
+olf05', 1), ('wolf06', 1), ('wolf07', 1), ('wolf08', 1), ('wolf09', 1), ('wolf10', 1), ('wol
+f11', 1), ('wolf12', 1), ('wolf13', 1), ('wolf14', 1), ('wolf15', 1), ('wolf16', 1), ('wolf1
+7', 1)]
+loading dataset: val_s6
+
+filter:
+  seasons:
+  - 6
+  movies: []
+sample_length: null
+num_samples: null
+shuffle: false
+
+episodes: val_s6:
+
+['s06e01a', 's06e01b', 's06e02a', 's06e02b', 's06e03b', 's06e04a', 's06e04b', 's06e05a', 's0
+6e05b', 's06e06a', 's06e06b', 's06e07a', 's06e07b', 's06e08a', 's06e08b', 's06e09a', 's06e09
+b', 's06e10a', 's06e10b', 's06e11a', 's06e11b', 's06e12a', 's06e12b', 's06e13a', 's06e13b',
+'s06e14a', 's06e14b', 's06e15a', 's06e15b', 's06e15c', 's06e15d', 's06e17a', 's06e17b', 's06
+e18a', 's06e18b', 's06e19a', 's06e19b', 's06e20a', 's06e20b', 's06e21a', 's06e21b', 's06e22a
+', 's06e22b', 's06e23a', 's06e23b', 's06e24a', 's06e24b', 's06e24c', 's06e24d']
+loading dataset: val_figures
+
+filter:
+  seasons: []
+  movies:
+  - figures
+sample_length: null
+num_samples: null
+shuffle: false
+
+episodes: val_figures:
+
+[('figures01', 1), ('figures02', 1), ('figures03', 1), ('figures04', 1), ('figures05', 1), (
+'figures06', 1), ('figures07', 1), ('figures08', 1), ('figures09', 1), ('figures10', 1), ('f
+igures11', 1), ('figures12', 1)]
+loading dataset: val_life
+
+filter:
+  seasons: []
+  movies:
+  - life
+sample_length: null
+num_samples: null
+shuffle: false
+
+episodes: val_life:
+
+[('life01', 1), ('life02', 1), ('life03', 1), ('life04', 1), ('life05', 1)]
+feat dims: [3072]
+creating model
+model: MultiSubjectConvLinearEncoder(
+  (feat_embeds): ModuleList(
+    (0): LinearConv(
+      (fc): Linear(in_features=3072, out_features=192, bias=True)
+      (conv): DepthConv1d(192, kernel_size=45, causal=False, positive=False, blockwise=False
+, bias=True)
+    )
+  )
+  (feat_pool): None
+  (hidden_model): None
+  (shared_decoder): Linear(in_features=192, out_features=1000, bias=True)
+  (subject_decoders): ModuleList(
+    (0-3): 4 x Linear(in_features=192, out_features=1000, bias=True)
+  )
+)
+num params (train): 1.56 (1.56M)
+Train:   0 [ 19]  Loss: 0.372 (0.373)  Time: 0.034,0.055 292/s  Mem: 0.14,0.17 GB
+Train:   0 [ 39]  Loss: 0.371 (0.372)  Time: 0.030,0.043 375/s  Mem: 0.14,0.17 GB
+Train:   0 [ 59]  Loss: 0.363 (0.369)  Time: 0.029,0.039 413/s  Mem: 0.14,0.17 GB
+Train:   0 [ 79]  Loss: 0.353 (0.366)  Time: 0.028,0.037 436/s  Mem: 0.14,0.17 GB
+Train:   0 [ 99]  Loss: 0.361 (0.365)  Time: 0.027,0.035 453/s  Mem: 0.14,0.17 GB
+Train:   0 [119]  Loss: 0.362 (0.364)  Time: 0.027,0.035 463/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   0  Loss: 0.354  Acc: 0.173,0.191,0.190,0.171 (0.181)
+Evaluate (val_figures):   0  Loss: 0.359  Acc: 0.156,0.154,0.151,0.131 (0.148)
+Evaluate (val_life):   0  Loss: 0.376  Acc: 0.090,0.115,0.124,0.072 (0.100)
+Train:   1 [ 19]  Loss: 0.349 (0.354)  Time: 0.019,0.024 677/s  Mem: 0.14,0.17 GB
+Train:   1 [ 39]  Loss: 0.353 (0.354)  Time: 0.019,0.024 673/s  Mem: 0.14,0.17 GB
+Train:   1 [ 59]  Loss: 0.348 (0.354)  Time: 0.019,0.024 679/s  Mem: 0.14,0.17 GB
+Train:   1 [ 79]  Loss: 0.341 (0.353)  Time: 0.019,0.023 688/s  Mem: 0.14,0.17 GB
+Train:   1 [ 99]  Loss: 0.347 (0.353)  Time: 0.019,0.023 695/s  Mem: 0.14,0.17 GB
+Train:   1 [119]  Loss: 0.350 (0.353)  Time: 0.019,0.023 698/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   1  Loss: 0.349  Acc: 0.198,0.219,0.219,0.193 (0.208)
+Evaluate (val_figures):   1  Loss: 0.356  Acc: 0.178,0.172,0.166,0.147 (0.166)
+Evaluate (val_life):   1  Loss: 0.373  Acc: 0.109,0.126,0.147,0.089 (0.118)
+Train:   2 [ 19]  Loss: 0.351 (0.351)  Time: 0.019,0.023 690/s  Mem: 0.14,0.17 GB
+Train:   2 [ 39]  Loss: 0.343 (0.350)  Time: 0.019,0.023 691/s  Mem: 0.14,0.17 GB
+Train:   2 [ 59]  Loss: 0.361 (0.351)  Time: 0.019,0.023 686/s  Mem: 0.14,0.17 GB
+Train:   2 [ 79]  Loss: 0.343 (0.351)  Time: 0.019,0.023 691/s  Mem: 0.14,0.17 GB
+Train:   2 [ 99]  Loss: 0.342 (0.350)  Time: 0.019,0.023 693/s  Mem: 0.14,0.17 GB
+Train:   2 [119]  Loss: 0.352 (0.350)  Time: 0.019,0.023 695/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   2  Loss: 0.348  Acc: 0.207,0.229,0.229,0.201 (0.216)
+Evaluate (val_figures):   2  Loss: 0.356  Acc: 0.184,0.179,0.173,0.150 (0.171)
+Evaluate (val_life):   2  Loss: 0.373  Acc: 0.108,0.132,0.153,0.097 (0.123)
+Train:   3 [ 19]  Loss: 0.352 (0.349)  Time: 0.019,0.023 688/s  Mem: 0.14,0.17 GB
+Train:   3 [ 39]  Loss: 0.348 (0.348)  Time: 0.019,0.023 687/s  Mem: 0.14,0.17 GB
+Train:   3 [ 59]  Loss: 0.347 (0.347)  Time: 0.019,0.023 693/s  Mem: 0.14,0.17 GB
+Train:   3 [ 79]  Loss: 0.351 (0.347)  Time: 0.019,0.023 700/s  Mem: 0.14,0.17 GB
+Train:   3 [ 99]  Loss: 0.336 (0.348)  Time: 0.019,0.023 706/s  Mem: 0.14,0.17 GB
+Train:   3 [119]  Loss: 0.348 (0.348)  Time: 0.019,0.023 704/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   3  Loss: 0.347  Acc: 0.214,0.235,0.235,0.207 (0.222)
+Evaluate (val_figures):   3  Loss: 0.356  Acc: 0.185,0.181,0.171,0.152 (0.173)
+Evaluate (val_life):   3  Loss: 0.372  Acc: 0.115,0.140,0.151,0.101 (0.127)
+Train:   4 [ 19]  Loss: 0.350 (0.347)  Time: 0.038,0.042 385/s  Mem: 0.14,0.17 GB
+Train:   4 [ 39]  Loss: 0.351 (0.347)  Time: 0.030,0.034 475/s  Mem: 0.14,0.17 GB
+Train:   4 [ 59]  Loss: 0.361 (0.347)  Time: 0.027,0.031 515/s  Mem: 0.14,0.17 GB
+Train:   4 [ 79]  Loss: 0.343 (0.347)  Time: 0.025,0.029 543/s  Mem: 0.14,0.17 GB
+Train:   4 [ 99]  Loss: 0.345 (0.346)  Time: 0.025,0.028 562/s  Mem: 0.14,0.17 GB
+Train:   4 [119]  Loss: 0.349 (0.346)  Time: 0.024,0.028 579/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   4  Loss: 0.346  Acc: 0.218,0.239,0.238,0.210 (0.226)
+Evaluate (val_figures):   4  Loss: 0.355  Acc: 0.187,0.185,0.175,0.153 (0.175)
+Evaluate (val_life):   4  Loss: 0.372  Acc: 0.116,0.143,0.159,0.105 (0.131)
+Train:   5 [ 19]  Loss: 0.362 (0.349)  Time: 0.020,0.024 672/s  Mem: 0.14,0.17 GB
+Train:   5 [ 39]  Loss: 0.351 (0.347)  Time: 0.019,0.023 690/s  Mem: 0.14,0.17 GB
+Train:   5 [ 59]  Loss: 0.343 (0.348)  Time: 0.019,0.023 698/s  Mem: 0.14,0.17 GB
+Train:   5 [ 79]  Loss: 0.353 (0.347)  Time: 0.019,0.023 700/s  Mem: 0.14,0.17 GB
+Train:   5 [ 99]  Loss: 0.342 (0.348)  Time: 0.018,0.023 701/s  Mem: 0.14,0.17 GB
+Train:   5 [119]  Loss: 0.353 (0.348)  Time: 0.019,0.023 698/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   5  Loss: 0.346  Acc: 0.220,0.240,0.239,0.212 (0.228)
+Evaluate (val_figures):   5  Loss: 0.355  Acc: 0.188,0.185,0.176,0.153 (0.175)
+Evaluate (val_life):   5  Loss: 0.372  Acc: 0.114,0.142,0.165,0.106 (0.132)
+Train:   6 [ 19]  Loss: 0.334 (0.346)  Time: 0.036,0.041 393/s  Mem: 0.14,0.17 GB
+Train:   6 [ 39]  Loss: 0.337 (0.346)  Time: 0.028,0.032 497/s  Mem: 0.14,0.17 GB
+Train:   6 [ 59]  Loss: 0.347 (0.345)  Time: 0.025,0.029 546/s  Mem: 0.14,0.17 GB
+Train:   6 [ 79]  Loss: 0.350 (0.344)  Time: 0.023,0.028 580/s  Mem: 0.14,0.17 GB
+Train:   6 [ 99]  Loss: 0.334 (0.344)  Time: 0.022,0.026 608/s  Mem: 0.14,0.17 GB
+Train:   6 [119]  Loss: 0.338 (0.344)  Time: 0.021,0.026 625/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   6  Loss: 0.345  Acc: 0.222,0.242,0.242,0.214 (0.230)
+Evaluate (val_figures):   6  Loss: 0.355  Acc: 0.188,0.187,0.177,0.153 (0.176)
+Evaluate (val_life):   6  Loss: 0.373  Acc: 0.113,0.146,0.159,0.104 (0.130)
+Train:   7 [ 19]  Loss: 0.336 (0.344)  Time: 0.017,0.021 749/s  Mem: 0.14,0.17 GB
+Train:   7 [ 39]  Loss: 0.346 (0.343)  Time: 0.019,0.023 699/s  Mem: 0.14,0.17 GB
+Train:   7 [ 59]  Loss: 0.352 (0.343)  Time: 0.018,0.023 709/s  Mem: 0.14,0.17 GB
+Train:   7 [ 79]  Loss: 0.336 (0.343)  Time: 0.018,0.022 711/s  Mem: 0.14,0.17 GB
+Train:   7 [ 99]  Loss: 0.347 (0.343)  Time: 0.018,0.022 719/s  Mem: 0.14,0.17 GB
+Train:   7 [119]  Loss: 0.346 (0.343)  Time: 0.018,0.022 724/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   7  Loss: 0.345  Acc: 0.222,0.242,0.242,0.214 (0.230)
+Evaluate (val_figures):   7  Loss: 0.355  Acc: 0.188,0.187,0.180,0.152 (0.177)
+Evaluate (val_life):   7  Loss: 0.372  Acc: 0.118,0.149,0.164,0.107 (0.134)
+Train:   8 [ 19]  Loss: 0.348 (0.343)  Time: 0.017,0.022 732/s  Mem: 0.14,0.17 GB
+Train:   8 [ 39]  Loss: 0.341 (0.343)  Time: 0.017,0.021 770/s  Mem: 0.14,0.17 GB
+Train:   8 [ 59]  Loss: 0.337 (0.343)  Time: 0.017,0.021 773/s  Mem: 0.14,0.17 GB
+Train:   8 [ 79]  Loss: 0.343 (0.343)  Time: 0.019,0.022 723/s  Mem: 0.14,0.17 GB
+Train:   8 [ 99]  Loss: 0.347 (0.343)  Time: 0.020,0.024 675/s  Mem: 0.14,0.17 GB
+Train:   8 [119]  Loss: 0.334 (0.343)  Time: 0.020,0.024 673/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   8  Loss: 0.345  Acc: 0.223,0.243,0.243,0.215 (0.231)
+Evaluate (val_figures):   8  Loss: 0.356  Acc: 0.186,0.187,0.178,0.151 (0.176)
+Evaluate (val_life):   8  Loss: 0.373  Acc: 0.114,0.150,0.162,0.107 (0.133)
+done! best accuracy:
+ {"val_s6": 0.2299802154302597, "val_figures": 0.17686236277222633, "val_life": 0.1343463808
+298111, "run_time": 63.862600734457374}
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ uv run p
+ython train_nested_encoder.py
+Uninstalled 1 package in 24ms
+░░░░░░░░░░░░░░░░░░░░ [0/1] Installing wheels...
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded perf
+ormance.
+         If the cache and target directories are on different filesystems, hardlinking may n
+ot be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to
+ suppress this warning.
+Installed 1 package in 120ms
+training multi-subject fmri encoder
+sha: 77840e142e358d6eaee2d8ce30085c343da58e0b, status: has uncommitted changes, branch: main
+config:
+out_dir: output/feature_encoding_default
+model_name: multi_sub_conv_linear
+subjects:
+- 1
+- 2
+- 3
+- 5
+model:
+  embed_dim: 192
+  encoder_kernel_size: 45
+  decoder_kernel_size: 0
+  hidden_model: null
+  global_pool: avg
+  encoder_causal: false
+  encoder_positive: false
+  encoder_blockwise: false
+  pool_num_heads: 3
+  with_shared_decoder: true
+  with_subject_decoders: true
+transformer:
+  num_heads: 3
+  depth: 6
+  mlp_ratio: 4.0
+conv1dnext:
+  depth: 6
+  kernel_size: 11
+  causal: false
+features:
+  internvl3_8b:
+    model: InternVL3_8B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+  internvl3_14b:
+    model: InternVL3_14B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+      layers.30: language_model.model.layers.30.post_attention_layernorm
+  qwen-2-5-omni-3b:
+    model: qwen2-5_3B
+    layers:
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  qwen-2-5-omni-7b:
+    model: qwen-2-5-omni-7b
+    layers:
+      layers.5: model.layers.5.post_attention_layernorm
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  whisper:
+    model: whisper
+    layers:
+      layers.12: layers.12.fc2
+      layers.25: layers.25.fc2
+      layers.31: layers.31.fc2
+      norm: layer_norm
+  llama_3.2_1b:
+    model: Llama-3.2-1B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+  llama_3.2_3b:
+    model: Llama-3.2-3B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+      layers.19: model.layers.19
+      layers.23: model.layers.23
+  vjepa2:
+    model: vjepa2_avg_feat
+    layers:
+      layers.5: encoder.layer.5.norm1_avg
+      layers.15: encoder.layer.15.norm1_avg
+      layers.25: encoder.layer.25.norm1_avg
+      layers.35: encoder.layer.35.norm1_avg
+      norm: encoder.layernorm_avg
+include_features:
+- llama_3.2_3b/layers.11
+datasets:
+  train:
+    filter:
+      seasons:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      movies:
+      - bourne
+      - wolf
+    sample_length: 64
+    num_samples: 2000
+    shuffle: true
+    seed: 42
+  val_s6:
+    filter:
+      seasons:
+      - 6
+      movies: []
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_figures:
+    filter:
+      seasons: []
+      movies:
+      - figures
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_life:
+    filter:
+      seasons: []
+      movies:
+      - life
+    sample_length: null
+    num_samples: null
+    shuffle: false
+val_set_name: val_figures
+batch_size: 16
+lr: 0.0003
+weight_decay: 0.1
+epochs: 10
+datasets_root: null
+seed: 3315
+overwrite: false
+device: cuda
+
+output output/feature_encoding_default exists; exiting.
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ uv run p
+ython train_nested_encoder.py
+Uninstalled 1 package in 26ms
+░░░░░░░░░░░░░░░░░░░░ [0/1] Installing wheels...
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded perf
+ormance.
+         If the cache and target directories are on different filesystems, hardlinking may n
+ot be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to
+ suppress this warning.
+Installed 1 package in 111ms
+training multi-subject fmri encoder
+sha: 77840e142e358d6eaee2d8ce30085c343da58e0b, status: has uncommitted changes, branch: main
+config:
+out_dir: output/nested_encoding_default
+model_name: multi_sub_nested
+subjects:
+- 1
+- 2
+- 3
+- 5
+model:
+  embed_dim: 192
+  encoder_kernel_size: 45
+  decoder_kernel_size: 0
+  hidden_model: null
+  global_pool: avg
+  encoder_causal: false
+  encoder_positive: false
+  encoder_blockwise: false
+  pool_num_heads: 3
+  with_shared_decoder: true
+  with_subject_decoders: true
+transformer:
+  num_heads: 3
+  depth: 6
+  mlp_ratio: 4.0
+conv1dnext:
+  depth: 6
+  kernel_size: 11
+  causal: false
+features:
+  internvl3_8b:
+    model: InternVL3_8B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+  internvl3_14b:
+    model: InternVL3_14B
+    layers:
+      layers.20: language_model.model.layers.20.post_attention_layernorm
+      layers.30: language_model.model.layers.30.post_attention_layernorm
+  qwen-2-5-omni-3b:
+    model: qwen2-5_3B
+    layers:
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  qwen-2-5-omni-7b:
+    model: qwen-2-5-omni-7b
+    layers:
+      layers.5: model.layers.5.post_attention_layernorm
+      layers.10: model.layers.10.post_attention_layernorm
+      layers.15: model.layers.15.post_attention_layernorm
+      layers.20: model.layers.20.post_attention_layernorm
+      norm: model.norm
+  whisper:
+    model: whisper
+    layers:
+      layers.12: layers.12.fc2
+      layers.25: layers.25.fc2
+      layers.31: layers.31.fc2
+      norm: layer_norm
+  llama_3.2_1b:
+    model: Llama-3.2-1B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+  llama_3.2_3b:
+    model: Llama-3.2-3B
+    layers:
+      layers.7: model.layers.7
+      layers.11: model.layers.11
+      layers.15: model.layers.15
+      layers.19: model.layers.19
+      layers.23: model.layers.23
+  vjepa2:
+    model: vjepa2_avg_feat
+    layers:
+      layers.5: encoder.layer.5.norm1_avg
+      layers.15: encoder.layer.15.norm1_avg
+      layers.25: encoder.layer.25.norm1_avg
+      layers.35: encoder.layer.35.norm1_avg
+      norm: encoder.layernorm_avg
+include_features:
+- llama_3.2_3b/layers.11
+datasets:
+  train:
+    filter:
+      seasons:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      movies:
+      - bourne
+      - wolf
+    sample_length: 64
+    num_samples: 2000
+    shuffle: true
+    seed: 42
+  val_s6:
+    filter:
+      seasons:
+      - 6
+      movies: []
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_figures:
+    filter:
+      seasons: []
+      movies:
+      - figures
+    sample_length: null
+    num_samples: null
+    shuffle: false
+  val_life:
+    filter:
+      seasons: []
+      movies:
+      - life
+    sample_length: null
+    num_samples: null
+    shuffle: false
+val_set_name: val_figures
+batch_size: 16
+lr: 0.0003
+weight_decay: 0.1
+epochs: 10
+datasets_root: null
+seed: 3315
+overwrite: false
+device: cuda
+
+running on: cuda
+creating data loaders
+loading fmri data
+loading features llama_3.2_3b/layers.11 (Llama-3.2-3B/model.layers.11)
+loading dataset: train
+
+filter:
+  seasons:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  movies:
+  - bourne
+  - wolf
+sample_length: 64
+num_samples: 2000
+shuffle: true
+seed: 42
+
+episodes: train:
+
+['s01e01a', 's01e01b', 's01e02a', 's01e02b', 's01e03a', 's01e03b', 's01e04a', 's01e04b', 's0
+1e05a', 's01e05b', 's01e06a', 's01e06b', 's01e07a', 's01e07b', 's01e08a', 's01e08b', 's01e09
+a', 's01e09b', 's01e10a', 's01e10b', 's01e11a', 's01e11b', 's01e12a', 's01e12b', 's01e13a',
+'s01e13b', 's01e14a', 's01e14b', 's01e15a', 's01e15b', 's01e16a', 's01e16b', 's01e17a', 's01
+e17b', 's01e18a', 's01e18b', 's01e19a', 's01e19b', 's01e20a', 's01e20b', 's01e21a', 's01e21b
+', 's01e22a', 's01e22b', 's01e23a', 's01e23b', 's01e24a', 's01e24b', 's02e01a', 's02e01b', '
+s02e02a', 's02e02b', 's02e03a', 's02e03b', 's02e04a', 's02e04b', 's02e05a', 's02e05b', 's02e
+06a', 's02e06b', 's02e07a', 's02e07b', 's02e08a', 's02e08b', 's02e09a', 's02e09b', 's02e10a'
+, 's02e10b', 's02e11a', 's02e11b', 's02e12a', 's02e12b', 's02e13a', 's02e13b', 's02e14a', 's
+02e14b', 's02e15a', 's02e15b', 's02e16a', 's02e16b', 's02e17a', 's02e17b', 's02e18a', 's02e1
+8b', 's02e19a', 's02e19b', 's02e20a', 's02e20b', 's02e21a', 's02e21b', 's02e22a', 's02e22b',
+ 's02e23a', 's02e23b', 's02e24a', 's02e24b', 's03e01a', 's03e01b', 's03e02a', 's03e02b', 's0
+3e03a', 's03e03b', 's03e04a', 's03e04b', 's03e05a', 's03e05b', 's03e06a', 's03e06b', 's03e07
+a', 's03e07b', 's03e08a', 's03e08b', 's03e09a', 's03e09b', 's03e10a', 's03e10b', 's03e11a',
+'s03e11b', 's03e12a', 's03e12b', 's03e13a', 's03e13b', 's03e14a', 's03e14b', 's03e15a', 's03
+e15b', 's03e16a', 's03e16b', 's03e17a', 's03e17b', 's03e18a', 's03e18b', 's03e19a', 's03e19b
+', 's03e20a', 's03e20b', 's03e21a', 's03e21b', 's03e22a', 's03e22b', 's03e23a', 's03e23b', '
+s03e24a', 's03e24b', 's03e25a', 's03e25b', 's04e02a', 's04e02b', 's04e03a', 's04e03b', 's04e
+04a', 's04e04b', 's04e05a', 's04e05b', 's04e06a', 's04e06b', 's04e07a', 's04e07b', 's04e08a'
+, 's04e08b', 's04e09a', 's04e09b', 's04e10a', 's04e10b', 's04e11a', 's04e11b', 's04e12a', 's
+04e12b', 's04e13a', 's04e14a', 's04e14b', 's04e15a', 's04e15b', 's04e16a', 's04e16b', 's04e1
+7a', 's04e17b', 's04e18a', 's04e18b', 's04e19a', 's04e19b', 's04e20a', 's04e20b', 's04e21a',
+ 's04e21b', 's04e22a', 's04e22b', 's04e23a', 's04e23b', 's04e23c', 's04e23d', 's05e01a', 's0
+5e01b', 's05e02a', 's05e02b', 's05e03a', 's05e03b', 's05e04a', 's05e04b', 's05e05a', 's05e05
+b', 's05e06a', 's05e06b', 's05e07a', 's05e07b', 's05e08a', 's05e08b', 's05e09a', 's05e09b',
+'s05e10a', 's05e10b', 's05e11a', 's05e11b', 's05e12a', 's05e12b', 's05e13a', 's05e13b', 's05
+e14a', 's05e14b', 's05e15a', 's05e15b', 's05e16a', 's05e16b', 's05e17a', 's05e17b', 's05e18a
+', 's05e18b', 's05e19a', 's05e19b', 's05e20b', 's05e21a', 's05e21b', 's05e22a', 's05e22b', '
+s05e23a', 's05e23b', 's05e23c', 's05e23d', ('bourne01', 1), ('bourne02', 1), ('bourne03', 1)
+, ('bourne04', 1), ('bourne05', 1), ('bourne06', 1), ('bourne07', 1), ('bourne08', 1), ('bou
+rne09', 1), ('bourne10', 1), ('wolf01', 1), ('wolf02', 1), ('wolf03', 1), ('wolf04', 1), ('w
+olf05', 1), ('wolf06', 1), ('wolf07', 1), ('wolf08', 1), ('wolf09', 1), ('wolf10', 1), ('wol
+f11', 1), ('wolf12', 1), ('wolf13', 1), ('wolf14', 1), ('wolf15', 1), ('wolf16', 1), ('wolf1
+7', 1)]
+loading dataset: val_s6
+
+filter:
+  seasons:
+  - 6
+  movies: []
+sample_length: null
+num_samples: null
+shuffle: false
+
+episodes: val_s6:
+
+['s06e01a', 's06e01b', 's06e02a', 's06e02b', 's06e03b', 's06e04a', 's06e04b', 's06e05a', 's0
+6e05b', 's06e06a', 's06e06b', 's06e07a', 's06e07b', 's06e08a', 's06e08b', 's06e09a', 's06e09
+b', 's06e10a', 's06e10b', 's06e11a', 's06e11b', 's06e12a', 's06e12b', 's06e13a', 's06e13b',
+'s06e14a', 's06e14b', 's06e15a', 's06e15b', 's06e15c', 's06e15d', 's06e17a', 's06e17b', 's06
+e18a', 's06e18b', 's06e19a', 's06e19b', 's06e20a', 's06e20b', 's06e21a', 's06e21b', 's06e22a
+', 's06e22b', 's06e23a', 's06e23b', 's06e24a', 's06e24b', 's06e24c', 's06e24d']
+loading dataset: val_figures
+
+filter:
+  seasons: []
+  movies:
+  - figures
+sample_length: null
+num_samples: null
+shuffle: false
+
+episodes: val_figures:
+
+[('figures01', 1), ('figures02', 1), ('figures03', 1), ('figures04', 1), ('figures05', 1), (
+'figures06', 1), ('figures07', 1), ('figures08', 1), ('figures09', 1), ('figures10', 1), ('f
+igures11', 1), ('figures12', 1)]
+loading dataset: val_life
+
+filter:
+  seasons: []
+  movies:
+  - life
+sample_length: null
+num_samples: null
+shuffle: false
+
+episodes: val_life:
+
+[('life01', 1), ('life02', 1), ('life03', 1), ('life04', 1), ('life05', 1)]
+feat dims: [3072]
+creating model
+model: MultiSubjectConvLinearEncoder(
+  (feat_embeds): ModuleList(
+    (0): LinearConv(
+      (fc): Linear(in_features=3072, out_features=192, bias=True)
+      (conv): DepthConv1d(192, kernel_size=45, causal=False, positive=False, blockwise=False
+, bias=True)
+    )
+  )
+  (feat_pool): None
+  (hidden_model): None
+  (shared_decoder): Linear(in_features=192, out_features=1000, bias=True)
+  (subject_decoders): ModuleList(
+    (0-3): 4 x Linear(in_features=192, out_features=1000, bias=True)
+  )
+)
+num params (train): 1.56 (1.56M)
+Train:   0 [ 19]  Loss: 0.372 (0.373)  Time: 0.049,0.065 245/s  Mem: 0.14,0.17 GB
+Train:   0 [ 39]  Loss: 0.371 (0.372)  Time: 0.040,0.050 318/s  Mem: 0.14,0.17 GB
+Train:   0 [ 59]  Loss: 0.363 (0.369)  Time: 0.036,0.044 367/s  Mem: 0.14,0.17 GB
+Train:   0 [ 79]  Loss: 0.353 (0.366)  Time: 0.035,0.043 376/s  Mem: 0.14,0.17 GB
+Train:   0 [ 99]  Loss: 0.361 (0.365)  Time: 0.038,0.044 361/s  Mem: 0.14,0.17 GB
+Train:   0 [119]  Loss: 0.362 (0.364)  Time: 0.037,0.043 372/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   0  Loss: 0.354  Acc: 0.173,0.191,0.190,0.171 (0.181)
+Evaluate (val_figures):   0  Loss: 0.359  Acc: 0.156,0.154,0.151,0.131 (0.148)
+Evaluate (val_life):   0  Loss: 0.376  Acc: 0.090,0.115,0.124,0.072 (0.100)
+Train:   1 [ 19]  Loss: 0.349 (0.354)  Time: 0.023,0.028 580/s  Mem: 0.14,0.17 GB
+Train:   1 [ 39]  Loss: 0.353 (0.354)  Time: 0.019,0.024 680/s  Mem: 0.14,0.17 GB
+Train:   1 [ 59]  Loss: 0.348 (0.354)  Time: 0.018,0.022 716/s  Mem: 0.14,0.17 GB
+Train:   1 [ 79]  Loss: 0.341 (0.353)  Time: 0.018,0.022 718/s  Mem: 0.14,0.17 GB
+Train:   1 [ 99]  Loss: 0.347 (0.353)  Time: 0.018,0.022 725/s  Mem: 0.14,0.17 GB
+Train:   1 [119]  Loss: 0.350 (0.353)  Time: 0.018,0.022 730/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   1  Loss: 0.349  Acc: 0.198,0.219,0.219,0.193 (0.208)
+Evaluate (val_figures):   1  Loss: 0.356  Acc: 0.178,0.172,0.166,0.147 (0.166)
+Evaluate (val_life):   1  Loss: 0.373  Acc: 0.109,0.126,0.147,0.089 (0.118)
+Train:   2 [ 19]  Loss: 0.351 (0.351)  Time: 0.032,0.037 436/s  Mem: 0.14,0.17 GB
+Train:   2 [ 39]  Loss: 0.343 (0.350)  Time: 0.025,0.029 557/s  Mem: 0.14,0.17 GB
+Train:   2 [ 59]  Loss: 0.361 (0.351)  Time: 0.022,0.026 613/s  Mem: 0.14,0.17 GB
+Train:   2 [ 79]  Loss: 0.343 (0.351)  Time: 0.021,0.025 647/s  Mem: 0.14,0.17 GB
+Train:   2 [ 99]  Loss: 0.342 (0.350)  Time: 0.020,0.024 657/s  Mem: 0.14,0.17 GB
+Train:   2 [119]  Loss: 0.352 (0.350)  Time: 0.020,0.024 673/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   2  Loss: 0.348  Acc: 0.207,0.229,0.229,0.201 (0.216)
+Evaluate (val_figures):   2  Loss: 0.356  Acc: 0.184,0.179,0.173,0.150 (0.171)
+Evaluate (val_life):   2  Loss: 0.373  Acc: 0.108,0.132,0.153,0.097 (0.123)
+Train:   3 [ 19]  Loss: 0.352 (0.349)  Time: 0.023,0.027 592/s  Mem: 0.14,0.17 GB
+Train:   3 [ 39]  Loss: 0.348 (0.348)  Time: 0.020,0.024 656/s  Mem: 0.14,0.17 GB
+Train:   3 [ 59]  Loss: 0.347 (0.347)  Time: 0.019,0.023 684/s  Mem: 0.14,0.17 GB
+Train:   3 [ 79]  Loss: 0.351 (0.347)  Time: 0.019,0.023 700/s  Mem: 0.14,0.17 GB
+Train:   3 [ 99]  Loss: 0.336 (0.348)  Time: 0.019,0.023 706/s  Mem: 0.14,0.17 GB
+Train:   3 [119]  Loss: 0.348 (0.348)  Time: 0.020,0.024 663/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   3  Loss: 0.347  Acc: 0.214,0.235,0.235,0.207 (0.222)
+Evaluate (val_figures):   3  Loss: 0.356  Acc: 0.185,0.181,0.171,0.152 (0.173)
+Evaluate (val_life):   3  Loss: 0.372  Acc: 0.115,0.140,0.151,0.101 (0.127)
+Train:   4 [ 19]  Loss: 0.350 (0.347)  Time: 0.021,0.025 653/s  Mem: 0.14,0.17 GB
+Train:   4 [ 39]  Loss: 0.351 (0.347)  Time: 0.020,0.024 672/s  Mem: 0.14,0.17 GB
+Train:   4 [ 59]  Loss: 0.361 (0.347)  Time: 0.020,0.024 677/s  Mem: 0.14,0.17 GB
+Train:   4 [ 79]  Loss: 0.343 (0.347)  Time: 0.020,0.024 676/s  Mem: 0.14,0.17 GB
+Train:   4 [ 99]  Loss: 0.345 (0.346)  Time: 0.020,0.024 669/s  Mem: 0.14,0.17 GB
+Train:   4 [119]  Loss: 0.349 (0.346)  Time: 0.020,0.024 676/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   4  Loss: 0.346  Acc: 0.218,0.239,0.238,0.210 (0.226)
+Evaluate (val_figures):   4  Loss: 0.355  Acc: 0.187,0.185,0.175,0.153 (0.175)
+Evaluate (val_life):   4  Loss: 0.372  Acc: 0.116,0.143,0.159,0.105 (0.131)
+Train:   5 [ 19]  Loss: 0.362 (0.349)  Time: 0.023,0.028 577/s  Mem: 0.14,0.17 GB
+Train:   5 [ 39]  Loss: 0.351 (0.347)  Time: 0.023,0.028 578/s  Mem: 0.14,0.17 GB
+Train:   5 [ 59]  Loss: 0.343 (0.348)  Time: 0.023,0.028 565/s  Mem: 0.14,0.17 GB
+Train:   5 [ 79]  Loss: 0.353 (0.347)  Time: 0.024,0.029 554/s  Mem: 0.14,0.17 GB
+Train:   5 [ 99]  Loss: 0.342 (0.348)  Time: 0.023,0.028 580/s  Mem: 0.14,0.17 GB
+Train:   5 [119]  Loss: 0.353 (0.348)  Time: 0.022,0.026 604/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   5  Loss: 0.346  Acc: 0.220,0.240,0.239,0.212 (0.228)
+Evaluate (val_figures):   5  Loss: 0.355  Acc: 0.188,0.185,0.176,0.153 (0.175)
+Evaluate (val_life):   5  Loss: 0.372  Acc: 0.114,0.142,0.165,0.106 (0.132)
+Train:   6 [ 19]  Loss: 0.334 (0.346)  Time: 0.017,0.021 762/s  Mem: 0.14,0.17 GB
+Train:   6 [ 39]  Loss: 0.337 (0.346)  Time: 0.017,0.021 766/s  Mem: 0.14,0.17 GB
+Train:   6 [ 59]  Loss: 0.347 (0.345)  Time: 0.017,0.021 770/s  Mem: 0.14,0.17 GB
+Train:   6 [ 79]  Loss: 0.350 (0.344)  Time: 0.017,0.021 772/s  Mem: 0.14,0.17 GB
+Train:   6 [ 99]  Loss: 0.334 (0.344)  Time: 0.017,0.021 770/s  Mem: 0.14,0.17 GB
+Train:   6 [119]  Loss: 0.338 (0.344)  Time: 0.017,0.021 768/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   6  Loss: 0.345  Acc: 0.222,0.242,0.242,0.214 (0.230)
+Evaluate (val_figures):   6  Loss: 0.355  Acc: 0.188,0.187,0.177,0.153 (0.176)
+Evaluate (val_life):   6  Loss: 0.373  Acc: 0.113,0.146,0.159,0.104 (0.130)
+Train:   7 [ 19]  Loss: 0.336 (0.344)  Time: 0.017,0.022 731/s  Mem: 0.14,0.17 GB
+Train:   7 [ 39]  Loss: 0.346 (0.343)  Time: 0.017,0.022 740/s  Mem: 0.14,0.17 GB
+Train:   7 [ 59]  Loss: 0.352 (0.343)  Time: 0.018,0.022 736/s  Mem: 0.14,0.17 GB
+Train:   7 [ 79]  Loss: 0.336 (0.343)  Time: 0.018,0.023 710/s  Mem: 0.14,0.17 GB
+Train:   7 [ 99]  Loss: 0.347 (0.343)  Time: 0.018,0.022 718/s  Mem: 0.14,0.17 GB
+Train:   7 [119]  Loss: 0.346 (0.343)  Time: 0.018,0.022 721/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   7  Loss: 0.345  Acc: 0.222,0.242,0.242,0.214 (0.230)
+Evaluate (val_figures):   7  Loss: 0.355  Acc: 0.188,0.187,0.180,0.152 (0.177)
+Evaluate (val_life):   7  Loss: 0.372  Acc: 0.118,0.149,0.164,0.107 (0.134)
+Train:   8 [ 19]  Loss: 0.348 (0.343)  Time: 0.019,0.024 667/s  Mem: 0.14,0.17 GB
+Train:   8 [ 39]  Loss: 0.341 (0.343)  Time: 0.018,0.023 694/s  Mem: 0.14,0.17 GB
+Train:   8 [ 59]  Loss: 0.337 (0.343)  Time: 0.018,0.023 704/s  Mem: 0.14,0.17 GB
+Train:   8 [ 79]  Loss: 0.343 (0.343)  Time: 0.018,0.023 709/s  Mem: 0.14,0.17 GB
+Train:   8 [ 99]  Loss: 0.347 (0.343)  Time: 0.018,0.023 710/s  Mem: 0.14,0.17 GB
+Train:   8 [119]  Loss: 0.334 (0.343)  Time: 0.018,0.022 716/s  Mem: 0.14,0.17 GB
+Evaluate (val_s6):   8  Loss: 0.345  Acc: 0.223,0.243,0.243,0.215 (0.231)
+Evaluate (val_figures):   8  Loss: 0.356  Acc: 0.186,0.187,0.178,0.151 (0.176)
+Evaluate (val_life):   8  Loss: 0.373  Acc: 0.114,0.150,0.162,0.107 (0.133)
+done! best accuracy:
+ {"val_s6": 0.2299802154302597, "val_figures": 0.17686236277222633, "val_life": 0.1343463808
+298111, "run_time": 61.36236942000687}
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$ python3
+Python 3.11.13 (main, Oct  7 2025, 15:34:32) [Clang 20.1.4 ] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import totrch
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'totrch'
+>>> import torch
+>>> print(torch.__version__)
+2.7.1+cu126
+>>> exit()
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhd
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhd
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhd
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhd
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhd
+(algonauts2025) nhdang01@koa-dgxa-b8-u11:/raid/nhdang01/fmri_encoder/algonauts2025$
