@@ -1,6 +1,5 @@
 from functools import partial
 from typing import Literal
-import os
 
 import torch
 from torch import nn
@@ -11,7 +10,6 @@ from layers import (
     AttentionPoolLatent,
 )
 
-from cl.models import TSEncoder
 
 class ConvLinear(nn.Module):
     def __init__(
@@ -190,7 +188,10 @@ class MultiSubjectConvLinearEncoder(nn.Module):
         pool_num_heads: int = 4,
         with_shared_decoder: bool = True,
         with_subject_decoders: bool = True,
-        pretrained_path: str = "/raid/nhdang01/fmri_encoder/algonauts2025/results/ts2vec_pretrain/checkpoint_epoch_30.pth",
+        # New args
+        use_softcl: bool = True,
+        cl_embed_dim: int = 128,  # Projection head output dim
+        cl_temp: float = 0.1,     # Softmax temperature
     ):
         assert with_shared_decoder or with_subject_decoders
 
@@ -232,39 +233,6 @@ class MultiSubjectConvLinearEncoder(nn.Module):
         else:
             self.register_module("hidden_model", None)
 
-        # --- NEW COMPONENT: Subject-Specific fMRI Projectors (Tower B) ---
-        # Maps (B, T, Voxels) -> (B, T, Latent)
-        # We use a ModuleList so we can pick the right one per subject
-        
-        # Projectors with dropout
-        # self.fmri_projectors = nn.ModuleList([
-        #     nn.Sequential(
-        #         nn.Linear(target_dim, 1024),
-        #         nn.LayerNorm(1024),
-        #         nn.ReLU(),
-        #         nn.Dropout(0.3), 
-        #         nn.Linear(1024, embed_dim) # Maps to same space as Video
-        #     ) for _ in range(num_subjects)
-        # ])
-        self.cl_head = nn.Sequential(
-            nn.Linear(embed_dim, embed_dim),
-            nn.ReLU(),
-            nn.Linear(embed_dim, embed_dim) # Output for CL loss
-        )
-        
-        self.fmri_projector = nn.ModuleList([
-            nn.Linear(target_dim, target_dim) 
-            for _ in range(num_subjects)
-        ])
-
-        self.shared_projector = TSEncoder(
-            input_dims=target_dim,
-            output_dims=embed_dim,
-            hidden_dims=64,
-            depth=5,
-            mask_mode='binomial'
-        )
-
         if with_shared_decoder:
             self.shared_decoder = nn.Linear(embed_dim, target_dim)
         else:
@@ -284,60 +252,47 @@ class MultiSubjectConvLinearEncoder(nn.Module):
 
         self.apply(_init_weights)
         
-        if pretrained_path:
-            print(f"Loading pretrained TS2Vec from {pretrained_path}")
-            self.load_pretrained_ts2vec(pretrained_path)
-            print("Freezing shared_projector weights...")
-            for param in self.shared_projector.parameters():
-                param.requires_grad = False
-
-
-    def load_pretrained_ts2vec(self, path):
-        """
-        Loads weights from the TS2Vec wrapper into self.shared_projector (TSEncoder).
-        Handles prefix stripping because TS2Vec saves keys as '_net.feature_extractor...'
-        """
-        if not os.path.exists(path):
-            print(f"Warning: Pretrained path {path} not found. Using random init.")
-            return
-
-        # Load the checkpoint
-        checkpoint = torch.load(path, map_location='cpu')
+        self.use_softcl = use_softcl
         
-        # TS2Vec wrapper saves the state_dict of 'self.net' (which is the TSEncoder)
-        # BUT depending on how you saved it (model.save vs torch.save(model.state_dict)),
-        # the keys might vary. 
-        # Case A: Saved via TS2Vec.save() -> keys are pure TSEncoder keys ('feature_extractor.net.0...')
-        # Case B: Saved via torch.save(wrapper) -> keys might have '_net.' prefix
+        if self.use_softcl:
+            self.cl_projection_head = nn.Sequential(
+                nn.Linear(embed_dim, embed_dim),
+                nn.ReLU(),
+                nn.Linear(embed_dim, cl_embed_dim)
+            )
+            self.cl_temp = cl_temp
+
+    def forward(self, features: list[torch.Tensor], training_cl: bool = False):
+        # features: list of (N, T, D_i)
         
-        new_state_dict = {}
-        for k, v in checkpoint.items():
-            # If saved via model.net.state_dict() (which my script did), keys are clean.
-            # If keys have '_net.' prefix, strip it.
-            if k.startswith('_net.'):
-                k = k[5:] 
-            new_state_dict[k] = v
+        # --- 1. View 1 (Standard Pass) ---
+        embed_1 = self._get_shared_latent(features)
+        
+        # --- 2. View 2 (Augmented Pass - ONLY if training CL) ---
+        if self.use_softcl and training_cl:
+            # Augment features: Add noise or Dropout
+            # Note: Jittering is best done here on the fly
+            aug_features = [f + torch.randn_like(f) * 0.01 for f in features]
+            embed_2 = self._get_shared_latent(aug_features)
             
-        # Load into the specific submodule
-        try:
-            missing, unexpected = self.shared_projector.load_state_dict(new_state_dict, strict=False)
-            print(f"TS2Vec weights loaded. Missing: {len(missing)}, Unexpected: {len(unexpected)}")
-            # Optional: Freeze the encoder initially?
-            # for param in self.shared_projector.parameters():
-            #     param.requires_grad = False
-        except Exception as e:
-            print(f"Error loading TS2Vec weights: {e}")
+            # Project both views
+            # (N, T, 256) -> (N, T, 128)
+            z1 = self.cl_projection_head(embed_1) 
+            z2 = self.cl_projection_head(embed_2)
+            
+            # Return shared output + CL projections
+            # The actual loss calculation happens in the training loop, not the model
+            return self._decode(embed_1), z1, z2
 
-    
-    def forward(self, features: list[torch.Tensor], target_fmri: torch.Tensor = None):
-        # features: list of (N, T, D_i) or (N, T, L_i, D_i)
+        # Standard Inference
+        return self._decode(embed_1)
 
+    def _get_shared_latent(self, features_list):
+        """Refactored latent extraction logic for reuse"""
         embed_features: list[torch.Tensor] = []
-        for feat, feat_embed in zip(features, self.feat_embeds):
+        for feat, feat_embed in zip(features_list, self.feat_embeds):
             # view as (N, L_i, T, D_i)
             feat = feat[:, None] if feat.ndim == 3 else feat.transpose(1, 2)
-
-            # project to (N, L, T, d)
             feat = feat_embed(feat)
             embed_features.append(feat)
 
@@ -345,79 +300,16 @@ class MultiSubjectConvLinearEncoder(nn.Module):
             embed = sum(feat.mean(dim=1) for feat in embed_features)
         else:
             embed = torch.cat(embed_features, dim=1)
-            # (N, L, T, d) -> (N, T, L, d)
             embed = embed.transpose(1, 2)
             embed = self.feat_pool(embed)
 
         if self.hidden_model is not None:
             embed = self.hidden_model(embed)
+            
+        return embed
 
-        z_video = self.cl_head(embed)
-
-        z_fmri_shared = None
-
-        if target_fmri is not None:
-            # Input is (B, 4, T, 1000)
-            
-            latents_list = []
-            
-            
-            """
-            optimized from:
-            if target_fmri is not None:
-            # Input is (B, 4, T, 1000)
-                latents_list = []
-            
-                # Iterate through the 4 subjects in the batch dimension
-                for s in range(self.num_subjects):
-                    # Slice: (B, T, 1000)
-                    sub_data = target_fmri[:, s, :, :]
-                    
-                    # Handle NaNs (Critical for Algonauts)
-                    sub_data = torch.nan_to_num(sub_data, nan=0.0)
-                    
-                    # A. Apply Subject Adapter
-                    sub_aligned = self.fmri_adapters[s](sub_data)
-                    
-                    # B. Apply Shared TSEncoder
-                    sub_latent = self.shared_projector(sub_aligned) # (B, T, 256)
-                    latents_list.append(sub_latent)
-                
-            """
-            
-            # Handle NaNs globally
-            target_fmri = torch.nan_to_num(target_fmri, nan=0.0)
-
-            # Apply subject-specific projectors
-            aligned_subs = [
-                proj(target_fmri[:, i]) 
-                for i, proj in enumerate(self.fmri_projector)
-            ]
-            
-            # Stack and flatten for shared projector: (B*S, T, C)
-            aligned_batch = torch.stack(aligned_subs, dim=1)
-            b, s, t, c = aligned_batch.shape
-            aligned_flat = aligned_batch.view(b * s, t, c)
-            
-            # Apply shared projector in parallel
-            latents_flat = self.shared_projector(aligned_flat)
-            
-            # Reshape back and unbind: (B, S, T, Embed) -> List[(B, T, Embed)]
-            latents_list = latents_flat.view(b, s, t, -1).unbind(dim=1)
-                
-            
-            """
-            """
-            
-            # Stack: (B, 4, T, 256)
-            all_latents = torch.stack(latents_list, dim=1)
-            
-            # C. POOLING (The "Call it a day" part)
-            # Average across subjects to find the "True Signal"
-            z_fmri_shared = all_latents.mean(dim=1) # (B, T, 256)
-            
-            # z_fmri_shared = self.cl_head(z_fmri_shared)
-    
+    def _decode(self, embed):
+        """Refactored decoding logic"""
         if self.shared_decoder is not None:
             shared_output = self.shared_decoder(embed)
             shared_output = shared_output[:, None].expand(-1, self.num_subjects, -1, -1)
@@ -432,9 +324,7 @@ class MultiSubjectConvLinearEncoder(nn.Module):
         else:
             subject_output = 0.0
 
-        output = subject_output + shared_output
-        return output, z_video, z_fmri_shared
-
+        return subject_output + shared_output
 
 def _make_feat_embed(
     feat_dim: int = 2048,

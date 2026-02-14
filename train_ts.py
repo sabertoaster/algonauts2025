@@ -20,20 +20,20 @@ from data import (
     episode_filter,
 )
 from models import MultiSubjectConvLinearEncoder
+from src3.models_ts import HierarchicalMultiSubjectEncoder  # NEW IMPORT
 from transformer import Transformer
 from conv1dnext import Conv1dNext
 from utils import pearsonr_score, get_sha
-
-from cl.soft_losses import hier_CL_soft
 
 SUBJECTS = (1, 2, 3, 5)
 
 ROOT = Path(__file__).parent
 DEFAULT_DATA_DIR = ROOT / "datasets"
-DEFAULT_CONFIG = ROOT / "config/default_feature_encoding.yaml"
+DEFAULT_CONFIG = ROOT / "config/default_ts_encoding.yaml"
 
 MODELS_DICT = {
     "multi_sub_conv_linear": MultiSubjectConvLinearEncoder,
+    "hierarchical_multi_subject": HierarchicalMultiSubjectEncoder,  # ADD NEW MODEL
 }
 
 
@@ -77,24 +77,45 @@ def main(cfg: DictConfig):
     print("feat dims:", feat_dims)
 
     print("creating model")
-    hidden_model_type = cfg.model.pop("hidden_model")
+    hidden_model_type = cfg.model.pop("hidden_model", None)  # Use get with default
     if hidden_model_type == "transformer":
-        hidden_model_cfg = cfg.transformer
+        hidden_model_cfg = cfg.get("transformer", {})
         hidden_model = Transformer(embed_dim=cfg.model.embed_dim, **hidden_model_cfg)
     elif hidden_model_type == "conv1dnext":
-        hidden_model_cfg = cfg.conv1dnext
+        hidden_model_cfg = cfg.get("conv1dnext", {})
         hidden_model = Conv1dNext(embed_dim=cfg.model.embed_dim, **hidden_model_cfg)
     else:
         hidden_model = None
 
     subjects = cfg.get("subjects", SUBJECTS)
     model_cls = MODELS_DICT[cfg.model_name]
-    model = model_cls(
-        num_subjects=len(subjects),
-        feat_dims=feat_dims,
-        hidden_model=hidden_model,
-        **cfg.model,
-    )
+    
+    # Create model with appropriate parameters
+    if cfg.model_name == "hierarchical_multi_subject":
+        # Extract hierarchical-specific parameters
+        model_params = cfg.model.copy()
+        # Remove hierarchical-specific params that might not be in cfg.model
+        hierarchical_params = {
+            'num_hierarchical_layers': model_params.pop('num_hierarchical_layers', 3),
+            'hierarchical_kernel_sizes': model_params.pop('hierarchical_kernel_sizes', [33, 17, 9]),
+            'hierarchical_dropout': model_params.pop('hierarchical_dropout', 0.1),
+        }
+        
+        model = model_cls(
+            num_subjects=len(subjects),
+            feat_dims=feat_dims,
+            hidden_model=hidden_model,
+            **hierarchical_params,
+            **model_params,  # Pass remaining params
+        )
+    else:
+        model = model_cls(
+            num_subjects=len(subjects),
+            feat_dims=feat_dims,
+            hidden_model=hidden_model,
+            **cfg.model,
+        )
+    
     print("model:", model)
 
     model = model.to(device)
@@ -145,8 +166,10 @@ def main(cfg: DictConfig):
             best_metrics = val_metrics
             best_state = model.state_dict()
         else:
-            # early stopping
-            break
+            # Optional: add patience for early stopping
+            if hasattr(cfg, 'patience') and (epoch - best_epoch) >= cfg.patience:
+                print(f"Early stopping at epoch {epoch}")
+                break
 
     run_time = time.monotonic() - tic
     best_accs["run_time"] = run_time
@@ -195,7 +218,7 @@ def make_data_loaders(cfg: DictConfig) -> dict[str, DataLoader]:
         features = load_features(cfg, model_name, layer_name)
 
         # pre-pool features if we are doing average pooling, to save space and time.
-        if cfg.model.global_pool == "avg":
+        if cfg.model.get("global_pool", "avg") == "avg":
             features = pool_features(features)
 
         all_features.append(features)
@@ -264,9 +287,6 @@ def train_one_epoch(
         torch.cuda.reset_peak_memory_stats()
 
     loss_m = AverageMeter()
-    cl_loss_m = AverageMeter()
-    mse_loss_m = AverageMeter()
-    
     data_time_m = AverageMeter()
     step_time_m = AverageMeter()
 
@@ -280,32 +300,8 @@ def train_one_epoch(
         data_time = time.monotonic() - end
 
         # forward pass
-        output, z_video, z_fmri  = model(feats, target_fmri=sample)
-        mask = ~torch.isnan(sample)
-        loss_mse = F.mse_loss(output[mask], sample[mask])
-        loss_cl = 0.0
-        
-        if z_fmri is not None:
-            # 1. Generate Soft Labels from Video Structure
-            # Flatten (B, T, D) -> (B, D_flat) for instance comparison
-            z_flat = z_video.mean(dim=1)
-            dist_mat = torch.cdist(z_flat, z_flat)
-            soft_labels = 2 / (1 + torch.exp(dist_mat)) # Sigmoid kernel
-            
-            # 2. Compute SoftCLT
-            # "Align Video Latent with Consensus Brain Latent"
-            loss_cl = hier_CL_soft(
-                z_video, 
-                z_fmri,
-                soft_labels=soft_labels,
-                lambda_=0.5,
-                soft_temporal=True,
-                soft_instance=True
-            )
-            print(f"Z_Video Norm: {z_video.norm(dim=-1).mean().item()}")
-            print(f"Z_fMRI Norm: {z_fmri.norm(dim=-1).mean().item()}")
-        
-        loss = loss_mse + 0.01 * loss_cl
+        output = model(feats)
+        loss = F.mse_loss(output, sample)
 
         loss_item = loss.item()
 
@@ -325,8 +321,6 @@ def train_one_epoch(
         step_time = time.monotonic() - end
 
         loss_m.update(loss_item, batch_size)
-        mse_loss_m.update(loss_mse.item(), batch_size)
-        cl_loss_m.update(loss_cl.item(), batch_size)
         data_time_m.update(data_time, batch_size)
         step_time_m.update(step_time, batch_size)
 
@@ -337,10 +331,9 @@ def train_one_epoch(
                 res_mem_gb = torch.cuda.max_memory_reserved() / 1e9
             else:
                 alloc_mem_gb = res_mem_gb = 0.0
+
             print(
                 f"Train: {epoch:>3d} [{batch_idx:>3d}]"
-                f"  Loss MSE {mse_loss_m.val:#.3g} ({mse_loss_m.avg:#.3g})"
-                f"  Loss CL {cl_loss_m.val:#.3g} ({cl_loss_m.avg:#.3g})"
                 f"  Loss: {loss_m.val:#.3g} ({loss_m.avg:#.3g})"
                 f"  Time: {data_time_m.avg:.3f},{step_time_m.avg:.3f} {tput:.0f}/s"
                 f"  Mem: {alloc_mem_gb:.2f},{res_mem_gb:.2f} GB"
@@ -376,7 +369,7 @@ def evaluate(
         batch_size = sample.size(0)
 
         # forward pass
-        output, _, _ = model(feats)
+        output = model(feats)
         loss = F.mse_loss(output, sample)
         loss_item = loss.item()
 

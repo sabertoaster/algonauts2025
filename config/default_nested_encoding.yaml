@@ -1,6 +1,6 @@
-out_dir: outputs/feature_encoding_default
+out_dir: output/nested_encoding_default
 
-model_name: multi_sub_conv_linear
+model_name: multi_sub_nested
 
 subjects: [1, 2, 3, 5]
 
@@ -91,6 +91,7 @@ features:
 
 include_features:
   - llama_3.2_3b/layers.11
+
 
 datasets:
   train:

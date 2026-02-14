@@ -13,7 +13,7 @@ import cl._eval_protocols as eval_protocols
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import average_precision_score
 
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 class SamePadConv(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, dilation=1, groups=1):

@@ -39,35 +39,40 @@ def generate_config_variations():
     # Define feature combinations to test
     feature_combinations = [
         # Single features
-        ["llama_3.2_3B/layers.11"],
+        ["llama_3.2_3b/layers.11"],
         ["whisper/layers.12"],
         ["qwen-2-5-omni-3b/layers.20"],
         ["internvl3_8b/layers.20"],
-        ["vjepa2/encoder.layernorm_avg"],
+        # ["vjepa2/encoder.layernorm_avg"],
+        ["vjepa2/norm"],
         ["qwen-2-5-omni-7b/layers.20"],
         # Pairs
-        ["llama_3.2_3B/layers.11", "whisper/layers.12"],
+        ["llama_3.2_3b/layers.11", "whisper/layers.12"],
         ["qwen-2-5-omni-3b/layers.20", "internvl3_8b/layers.20"],
-        ["whisper/layers.12", "vjepa2/encoder.layernorm_avg"],
+        # ["whisper/layers.12", "vjepa2/encoder.layernorm_avg"],
+        ["whisper/layers.12", "vjepa2/norm"],
         # Triples
-        ["llama_3.2_3B/layers.11", "whisper/layers.12", "qwen-2-5-omni-3b/layers.20"],
-        ["internvl3_8b/layers.20", "vjepa2/encoder.layernorm_avg", "whisper/layers.12"],
+        ["llama_3.2_3b/layers.11", "whisper/layers.12", "qwen-2-5-omni-3b/layers.20"],
+        # ["internvl3_8b/layers.20", "vjepa2/encoder.layernorm_avg", "whisper/layers.12"],
+        ["internvl3_8b/layers.20", "vjepa2/norm", "whisper/layers.12"],
         # All features (original)
         [
-            "llama_3.2_3B/layers.11",
+            "llama_3.2_3b/layers.11",
             "whisper/layers.12",
             "qwen-2-5-omni-3b/layers.20",
             "internvl3_8b/layers.20",
-            "vjepa2/encoder.layernorm_avg",
+            # "vjepa2/encoder.layernorm_avg",
+            "vjepa2/norm"
         ],
         # All features (new)
         [
-            "llama_3.2_3B/layers.11",
+            "llama_3.2_3b/layers.11",
             "whisper/layers.12",
             "qwen-2-5-omni-3b/layers.20",
             "qwen-2-5-omni-7b/layers.20",
             "internvl3_8b/layers.20",
-            "vjepa2/encoder.layernorm_avg",
+            # "vjepa2/encoder.layernorm_avg",
+            "vjepa2/norm",
         ],
     ]
 
@@ -82,7 +87,9 @@ def create_config_name(base_name, params, feature_suffix):
 
 def modify_config(base_config, params, features):
     """Modify the base config with new parameters."""
-    config = base_config.copy()
+    #config = base_config.copy()
+    import copy
+    config = copy.deepcopy(base_config)
 
     # Update hyperparameters
     for key, value in params.items():
