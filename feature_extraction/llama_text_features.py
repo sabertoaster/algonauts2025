@@ -10,9 +10,9 @@ from omegaconf import DictConfig, OmegaConf
 from timm.utils import random_seed
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from feature_extractor import FeatureExtractor
-from utils import get_sha
-from data import parse_friends_run, parse_movie10_run
+from medarc.feature_extractor import FeatureExtractor
+from medarc.utils import get_sha
+from medarc.data import parse_friends_run, parse_movie10_run
 
 ROOT = Path(__file__).parents[1]
 DEFAULT_DATA_DIR = ROOT / "datasets"

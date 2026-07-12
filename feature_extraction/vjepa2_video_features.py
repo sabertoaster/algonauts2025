@@ -20,7 +20,7 @@ import math
 import einops
 import torchvision.transforms as T
 from transformers import AutoVideoProcessor, AutoModel
-from feature_extractor import FeatureExtractor
+from medarc.feature_extractor import FeatureExtractor
 
 ROOT = Path(__file__).parent.parent
 DEFAULT_DATA_DIR = ROOT / "datasets"

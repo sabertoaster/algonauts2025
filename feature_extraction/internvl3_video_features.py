@@ -25,7 +25,7 @@ import dataclasses
 from enum import IntEnum, auto
 from functools import partial
 
-from feature_extractor import FeatureExtractor
+from medarc.feature_extractor import FeatureExtractor
 
 ROOT = Path(__file__).parent.parent
 DEFAULT_DATA_DIR = ROOT / "datasets"

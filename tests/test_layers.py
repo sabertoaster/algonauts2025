@@ -1,6 +1,6 @@
 import torch
 
-from layers import AttentionPoolLatent, LinearPoolLatent
+from medarc.layers import AttentionPoolLatent, LinearPoolLatent
 
 
 def test_attention_pool_latent():

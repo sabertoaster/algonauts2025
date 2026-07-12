@@ -1,6 +1,6 @@
 import torch
 
-from transformer import Transformer
+from medarc.transformer import Transformer
 
 
 def test_transformer():

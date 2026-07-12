@@ -12,17 +12,17 @@ from timm.utils import AverageMeter, random_seed
 from torch.utils.data import DataLoader
 from omegaconf import DictConfig, OmegaConf
 
-from data import (
+from medarc.data import (
     Algonauts2025Dataset,
     load_algonauts2025_friends_fmri,
     load_algonauts2025_movie10_fmri,
     load_sharded_features,
     episode_filter,
 )
-from models import MultiSubjectConvLinearEncoder
-from transformer import Transformer
-from conv1dnext import Conv1dNext
-from utils import pearsonr_score, get_sha
+from medarc.models import MultiSubjectConvLinearEncoder
+from medarc.transformer import Transformer
+from medarc.conv1dnext import Conv1dNext
+from medarc.utils import pearsonr_score, get_sha
 
 SUBJECTS = (1, 2, 3, 5)
 

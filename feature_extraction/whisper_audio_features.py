@@ -18,7 +18,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import math
 from transformers import WhisperModel, AutoProcessor
-from feature_extractor import FeatureExtractor
+from medarc.feature_extractor import FeatureExtractor
 
 ROOT = Path(__file__).parent.parent
 DEFAULT_DATA_DIR = ROOT / "datasets"

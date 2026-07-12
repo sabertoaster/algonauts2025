@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from models import MultiSubjectConvLinearEncoder
+from medarc.models import MultiSubjectConvLinearEncoder
 
 
 @pytest.mark.parametrize("global_pool", ["avg", "linear", "attn"])

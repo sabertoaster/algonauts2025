@@ -4,7 +4,7 @@ from typing import Literal
 import torch
 from torch import nn
 
-from layers import (
+from medarc.layers import (
     DepthConv1d,
     LinearPoolLatent,
     AttentionPoolLatent,

@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from timm.layers import DropPath, Mlp
 
-from layers import DepthConv1d
+from medarc.layers import DepthConv1d
 
 
 class Block(nn.Module):

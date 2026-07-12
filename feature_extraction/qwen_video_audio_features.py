@@ -25,7 +25,7 @@ import dataclasses
 from enum import IntEnum, auto
 import soundfile as sf
 from transformers import Qwen2_5OmniProcessor, Qwen2_5OmniForConditionalGeneration, Qwen2_5OmniThinkerForConditionalGeneration
-from feature_extractor import FeatureExtractor
+from medarc.feature_extractor import FeatureExtractor
 
 ROOT = Path(__file__).parent.parent
 DEFAULT_DATA_DIR = ROOT / "datasets"
